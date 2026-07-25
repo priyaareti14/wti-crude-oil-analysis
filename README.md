@@ -11,12 +11,11 @@ This project analyzes 11 years of WTI crude oil price data alongside 7 macroecon
 ---
 
 ## Key Findings
-- **Price momentum** (4-week moving average) explains 72% of short-term price movement
-- **XGBoost model** achieved R² of 0.91 with MAE of $2.02/barrel
-- **No overfitting** — temporal backtest on unseen 2023-2024 data: R² 0.80
-- **2025 real-world validation** — XGBoost predicted within $2.02/barrel of actual prices
-- **Jun-Dec 2026 forecast** — XGBoost: $88-98 | Prophet: $63-71 | EIA Official: ~$89
-- **2026 Iran War spike** — US-Israel attack on Iran (Feb 28, 2026) caused largest supply disruption in history, oil spiked to $113
+- Price momentum (4-week moving average) is the dominant driver, accounting for ~71% of feature importance
+- XGBoost model achieved R² of 0.91 with MAE of $2.02/barrel on the held-out test set
+- Robust across validation: R² 0.80 on a stricter 2015-2022 to 2023-2024 temporal holdout, confirming the model generalizes to unseen future periods
+- 2025 real-world validation: predicted the Jan-Jul 2025 average within ~$2.02/barrel of actual
+- Prophet forecasts WTI easing from ~$70 (Jun 2026) to ~$63 (Dec 2026), reflecting trend reversion after the early-2026 Iran-war price spike
 
 ---
 
