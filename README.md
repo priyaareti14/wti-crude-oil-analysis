@@ -1,117 +1,181 @@
 # WTI Crude Oil Price Analysis & Forecasting
-### What Drives Crude Oil Prices? A Macroeconomic Study (2015–2026)
 
-[![Tableau Dashboard](https://img.shields.io/badge/Tableau-Dashboard-blue)](https://public.tableau.com/app/profile/priya.areti/viz/WTICrudeOilAnalytics/Overview)
+### Macroeconomic Associations, Leakage-Free Validation, and Time-Series Forecasting (2015–2026)
+
+## Overview
+
+This project studies WTI crude oil prices alongside financial-market indicators and monthly macroeconomic variables. The analysis separates **explanatory relationships** from **forecasting**, uses time-ordered validation, and benchmarks machine-learning performance against a simple persistence forecast.
+
+**Research Question:**  
+How are macroeconomic and financial-market conditions associated with movements in WTI crude oil prices, and how much explanatory or predictive information do they add beyond recent oil-price dynamics?
 
 ---
 
-## Overview
-This project analyzes 11 years of WTI crude oil price data alongside 7 macroeconomic indicators to identify key price drivers, explain geopolitical impacts, and forecast prices 6 months ahead using machine learning.
+## Data
+
+The checked-in snapshot contains **559 weekly observations from September 14, 2015 through May 25, 2026**.
+
+| Source | Variables | Frequency Used |
+|---|---|---|
+| Yahoo Finance / `yfinance` | WTI Crude Oil, U.S. Dollar Index, VIX, S&P 500, Gold, Natural Gas | Weekly |
+| FRED / U.S. Bureau of Labor Statistics | CPI (`CPIAUCSL`) | Monthly |
+| FRED / Federal Reserve | Effective Federal Funds Rate (`FEDFUNDS`) | Monthly |
+
+**FRED Sources:**  
+- https://fred.stlouisfed.org/series/CPIAUCSL
+- https://fred.stlouisfed.org/series/FEDFUNDS
+
+Monthly CPI and Federal Funds data are kept at their native monthly frequency for econometric analysis. They are **not duplicated into weekly observations for predictive modeling**.
 
 ---
 
 ## Key Findings
-- Price momentum (4-week moving average) is the dominant driver, accounting for ~71% of feature importance
-- XGBoost model achieved R² of 0.91 with MAE of $2.02/barrel on the held-out test set
-- Robust across validation: R² 0.80 on a stricter 2015-2022 to 2023-2024 temporal holdout, confirming the model generalizes to unseen future periods
-- 2025 real-world validation: predicted the Jan-Jul 2025 average within ~$2.02/barrel of actual
-- Prophet forecasts WTI easing from ~$70 (Jun 2026) to ~$63 (Dec 2026), reflecting trend reversion after the early-2026 Iran-war price spike
 
----
+- **Short-run WTI movements show mean reversion in the weekly sample.** In the HAC/Newey-West regression, the coefficient on the prior week's WTI change is approximately **-0.235** (`p = 0.021`).
 
-## Data Sources
-| Source | Data | Frequency |
-|--------|------|-----------|
-| yfinance | WTI Crude Oil, DXY, VIX, S&P 500, Gold, Natural Gas | Daily → Weekly |
-| FRED API | CPI Inflation, Federal Funds Rate | Monthly → Weekly |
+- Adding weekly DXY, VIX, S&P 500, Gold, and Natural Gas returns increases model R² from approximately **0.060 to 0.091**. The improvement is modest, so these variables should not be described as strong standalone predictors.
 
-**Date Range:** January 2015 — May 2026  
-**Final Dataset:** 559 weeks × 8 variables
+- In the most recent chronological 20% holdout, the leakage-free one-week-ahead XGBoost model achieved **R² = 0.850** and **MAE = $3.15/barrel**. A persistence benchmark (`next week's price = this week's price`) achieved **R² = 0.841** and **MAE = $3.08/barrel**. XGBoost therefore did **not** improve MAE on that holdout.
+
+- In a stricter 2023–2024 backtest, XGBoost achieved **R² = 0.572** and **MAE = $2.89/barrel**, versus **R² = 0.689** and **MAE = $2.55/barrel** for the persistence benchmark. This reinforces that the ML model does not provide a stable forecasting advantage over a simple baseline.
+
+- At the monthly frequency, adding financial and macroeconomic variables raises adjusted R² to approximately **0.216**. Monthly CPI inflation has a strong contemporaneous association with WTI movements in this sample, but the analysis does **not** interpret that association as causal.
+
+- The Prophet output is retained as an **exploratory 26-week forecast snapshot generated from data through May 25, 2026**. It is not presented as a causal model or a guaranteed price forecast.
 
 ---
 
 ## Methodology
 
-### Feature Engineering
-- Lag variables (1, 2, 4, 8, 12 weeks)
-- Rolling averages (4, 12, 26 weeks)
-- Momentum indicator
-- Percent change features
-- Seasonality (month, quarter)
+### 1. Data Quality and Frequency Alignment
 
-### Models
-| Model | Purpose | Performance |
-|-------|---------|-------------|
-| XGBoost | Feature importance + short-term prediction | R² 0.91, MAE $2.02 |
-| Prophet | 6-month forward forecast | R² N/A, confidence interval $54-$80 |
+- Weekly market series are analyzed at weekly frequency.
+- CPI and the Effective Federal Funds Rate remain monthly for macroeconomic regressions.
+- Missing values, duplicate dates, and chronological ordering are checked before modeling.
 
-### Validation
-- Train/test split (80/20, time-based)
-- Temporal backtest: trained 2015-2022, tested 2023-2024
-- Real-world validation: Jan-Jul 2025 predictions vs actual prices
+### 2. Explanatory Regression Analysis
+
+Weekly WTI dollar changes are modeled using:
+
+- Prior-week WTI change
+- DXY return
+- VIX return
+- S&P 500 return
+- Gold return
+- Natural Gas return
+
+OLS regressions use **HAC/Newey-West standard errors** to reduce sensitivity to heteroskedasticity and serial correlation.
+
+A separate monthly specification adds monthly CPI inflation and the change in the Effective Federal Funds Rate.
+
+### 3. Leakage-Free XGBoost Forecasting
+
+The forecasting target is **next week's WTI price**. Every feature is available at week *t* or earlier; the model never uses the target week's WTI value in a rolling average or other feature.
+
+**Features include:**
+
+- Current and lagged WTI prices
+- 4-, 12-, and 26-week WTI moving averages
+- WTI momentum
+- DXY and VIX rolling averages
+- Weekly market returns
+- Month and quarter
+
+Validation is chronological, not random. XGBoost is evaluated against a **persistence benchmark** rather than judged on R² alone.
+
+### 4. Prophet Forecast
+
+Prophet is used separately for an exploratory forward price path based on historical WTI. The forecast is intentionally kept separate from the explanatory regression and one-step-ahead XGBoost evaluation.
 
 ---
 
 ## Visualizations
 
-### Key Geopolitical Events (2015–2026)
-![Event Analysis](event_analysis_final.png)
+### Leakage-Free Backtest
 
-### Feature Importance — What Drives Oil Prices?
-![Feature Importance](feature_importance_final.png)
+![Leakage-Free Backtest](charts/backtest_final.png)
 
-### Model Backtest — Actual vs Predicted
-![Backtest](backtest_final.png)
+### XGBoost Relative Feature Importance
 
-### 6-Month Forecast Scenarios
-![Forecast Scenarios](forecast_scenarios_final.png)
+Feature importance is shown as **relative model importance**, not as "percent of variance explained" and not as proof of causality.
 
-### Correlation Matrix
-![Correlation](correlation_heatmap_final.png)
+![Feature Importance](charts/feature_importance_final.png)
+
+### Weekly Market Correlations
+
+The heatmap uses **weekly WTI changes and market returns**, rather than correlations among trending price-level series.
+
+![Correlation Heatmap](charts/correlation_heatmap_final.png)
+
+### Prophet Forecast Snapshot
+
+![Prophet Forecast](charts/prophet_forecast_2026.png)
 
 ---
 
 ## Tableau Dashboard
-Interactive 3-page dashboard published on Tableau Public:
 
-🔗 **[View Dashboard](https://public.tableau.com/app/profile/priya.areti/viz/WTICrudeOilAnalytics/Overview)**
+The Tableau dashboard is designed to present the project interactively. Before republishing, it will be refreshed with the corrected exports in the `data/` folder so that its model metrics, feature importance, and forecast labels match this repository.
 
-**Pages:**
-- **Overview** — 11-year price history with key stats
-- **Analysis** — Macro indicators, correlation matrix, feature importance with parameter controls
-- **Forecast** — 6-month forecast + model validation
+**Tableau Public:**  
+https://public.tableau.com/app/profile/priya.areti/vizzes
 
 ---
 
-## Tools & Libraries
-- **Python** — pandas, numpy, matplotlib, seaborn
-- **Machine Learning** — XGBoost, Prophet, scikit-learn
-- **Data** — yfinance, FRED API
-- **Visualization** — Tableau Public
+## Repository Structure
+
+```text
+wti-crude-oil-analysis/
+├── README.md
+├── WTI_Crude_Oil_Price_Analysis.ipynb
+├── requirements.txt
+├── data/
+│   ├── market_weekly_snapshot.csv
+│   ├── macro_monthly_snapshot.csv
+│   ├── macro_normalized.csv
+│   ├── regression_results.csv
+│   ├── backtest_tableau.csv
+│   ├── feature_importance_clean.csv
+│   └── combined_forecast.csv
+└── charts/
+    ├── backtest_final.png
+    ├── feature_importance_final.png
+    ├── correlation_heatmap_final.png
+    └── prophet_forecast_2026.png
+```
 
 ---
 
-## Project Structure
+## Reproducibility
 
-**WTI_Crude_Oil_Price_Analysis.ipynb** — Main analysis notebook
+The notebook reads the checked-in data snapshots by default so the reported results can be reproduced without relying on changing market-data downloads.
 
-**data/**
-- macro_normalized.csv — Normalized macro indicators
-- feature_importance_clean.csv — Model feature importance
-- backtest_tableau.csv — Backtest results
-- combined_forecast.csv — Forecast data
+It also includes an optional refresh section for pulling a new market snapshot with `yfinance` and current FRED data.
 
-**charts/**
-- event_analysis_final.png — Geopolitical events chart
-- feature_importance_final.png — Feature importance chart
-- backtest_final.png — Backtest validation chart
-- forecast_scenarios_final.png — Forecast scenarios
-- correlation_heatmap_final.png — Correlation matrix
-- prophet_forecast_2026.png — Prophet forecast
+---
+
+## Limitations
+
+- Statistical association does **not** establish causality.
+- WTI futures experienced an extreme negative-price event in April 2020, which can materially affect model estimates and forecast metrics.
+- Monthly macroeconomic releases are not available at weekly frequency and should not be treated as fresh weekly information.
+- Tree-based feature importance measures contribution to the fitted model; it does not measure economic causality or literal variance explained.
+- Short-horizon oil-price forecasting is difficult, and model performance varies across evaluation windows. The persistence benchmark is therefore reported alongside XGBoost.
+
+---
+
+## Tools
+
+**Python:** pandas, NumPy, statsmodels, scikit-learn, XGBoost, Prophet, Matplotlib  
+**Visualization:** Tableau Public  
+**Data Sources:** Yahoo Finance / `yfinance`, FRED
 
 ---
 
 ## Author
+
 **Sai Kamala Priya Areti**  
 MS Business Analytics — Northeastern University  
-[LinkedIn](https://www.linkedin.com/in/your-linkedin) | [Tableau Public](https://public.tableau.com/app/profile/priya.areti)
+
+[LinkedIn](https://www.linkedin.com/in/priyaareti/) | [GitHub](https://github.com/priyaareti14) | [Tableau Public](https://public.tableau.com/app/profile/priya.areti/vizzes)
+
