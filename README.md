@@ -115,10 +115,24 @@ The heatmap uses **weekly WTI changes and market returns**, rather than correlat
 
 ## Tableau Dashboard
 
-The Tableau dashboard is designed to present the project interactively. Before republishing, it will be refreshed with the corrected exports in the `data/` folder so that its model metrics, feature importance, and forecast labels match this repository.
+The interactive Tableau dashboard summarizes the project's main analytical findings, including:
+
+- Leakage-free XGBoost vs. persistence backtesting
+- Recent holdout and 2023–2024 backtest MAE comparisons
+- Historical WTI price trends from 2015–2026
+- Weekly explanatory R² improvement from 0.060 to 0.091
+- XGBoost relative feature importance
+
+The dashboard uses the corrected exports in the `data/` folder and is aligned with the methodology and results reported in this repository.
+
+**Key takeaway:** A more complex forecasting model did not consistently outperform a simple persistence benchmark, reinforcing the importance of leakage-free validation, baseline comparisons, and honest out-of-time evaluation.
 
 **Tableau Public:**  
-https://public.tableau.com/app/profile/priya.areti/vizzes
+[Interactive WTI Dashboard](YOUR-DIRECT-TABLEAU-DASHBOARD-LINK)
+
+### Dashboard Preview
+
+![WTI Tableau Dashboard](charts/tableau_dashboard_final.png)
 
 ---
 
