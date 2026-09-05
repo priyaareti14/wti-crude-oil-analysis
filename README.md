@@ -128,7 +128,7 @@ The dashboard uses the corrected exports in the `data/` folder and is aligned wi
 **Key takeaway:** A more complex forecasting model did not consistently outperform a simple persistence benchmark, reinforcing the importance of leakage-free validation, baseline comparisons, and honest out-of-time evaluation.
 
 **Tableau Public:**  
-[Interactive WTI Dashboard](YOUR-DIRECT-TABLEAU-DASHBOARD-LINK)
+[Interactive WTI Dashboard](https://public.tableau.com/views/WTICrudeOilForecastingBenchmarksMarketSignals/WTIAnalysisDashboard?:language=en-GB&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
 
 ### Dashboard Preview
 
